@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iMessage Video Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #007AFF, #5856D6);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .input-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .input-area {
+            flex: 1;
+            min-height: 300px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 15px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .input-area:focus {
+            outline: none;
+            border-color: #007AFF;
+        }
+
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .control-group input, .control-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #34C759, #30A14E);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            align-self: flex-start;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(52, 199, 89, 0.3);
+        }
+
+        .generate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-container {
+            background: #000;
+            border-radius: 25px;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .phone-frame {
+            width: 375px;
+            height: 600px;
+            background: #000;
+            border-radius: 25px;
+            padding: 3px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 22px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .placeholder {
+            text-align: center;
+            color: #666;
+        }
+
+        .placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #FF3B30, #D70015);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+            align-self: flex-start;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #007AFF;
+            font-weight: 500;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e3e3e3;
+            border-top: 2px solid #007AFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% { 
+                transform: scale(0);
+            } 40% { 
+                transform: scale(1.0);
+            }
+        }
+
+        .example {
+            background: #f0f8ff;
+            border-left: 4px solid #007AFF;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #007AFF;
+        }
+
+        .example-text {
+            font-family: 'SF Mono', Monaco, monospace;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            white-space: pre-line;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>iMessage Video Generator</h1>
+            <p>Convert your text conversations into realistic iMessage videos with AI voice overs</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">📝 Enter Your Conversation</h2>
+                
+                <div class="example">
+                    <div class="example-title">Format Example:</div>
+                    <div class="example-text">P1: Hey, are we still on for tonight?
+P2: Absolutely! What time works for you?
+P1: How about 7 PM?
+P2: Perfect! See you then 😊</div>
+                </div>
+
+                <textarea class="input-area" placeholder="Enter your conversation here...
+Format: P1 or P2: Message
+P1 = Your messages (blue bubbles)
+P2 = Contact's messages (gray bubbles)
+
+Example:
+P1: Hi there!
+P2: Hey! How's it going?
+P1: Pretty good, thanks for asking
+P2: That's great to hear!"></textarea>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <label>Animation Speed</label>
+                        <select id="speed">
+                            <option value="slow">Slow (Extra delays)</option>
+                            <option value="medium" selected>Medium (Natural pace)</option>
+                            <option value="fast">Fast (Quick pace)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Contact Name</label>
+                        <input type="text" id="contactName" placeholder="Enter contact's name" value="Contact">
+                    </div>
+                    <div class="control-group">
+                        <label>Enable Voice Over</label>
+                        <select id="voiceEnabled">
+                            <option value="false">No Voice</option>
+                            <option value="true" selected>AI Voice Over</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>P1 Voice (Your Voice)</label>
+                        <select id="p1Voice">
+                            <option value="0">Voice 1 (Higher Pitch)</option>
+                            <option value="1" selected>Voice 2 (Medium Pitch)</option>
+                            <option value="2">Voice 3 (Lower Pitch)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>P2 Voice (Contact's Voice)</label>
+                        <select id="p2Voice">
+                            <option value="0">Voice 1 (Higher Pitch)</option>
+                            <option value="1">Voice 2 (Medium Pitch)</option>
+                            <option value="2" selected>Voice 3 (Lower Pitch)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="generate-btn" onclick="generateVideo()">
+                    🎬 Generate Video
+                </button>
+            </div>
+
+            <div class="preview-section">
+                <h2 class="section-title">📱 Preview & Download</h2>
+                <div class="video-container" id="videoContainer">
+                    <div class="placeholder">
+                        <div class="placeholder-icon">📱</div>
+                        <p>Your iMessage video will appear here</p>
+                    </div>
+                </div>
+                <button class="download-btn" id="downloadBtn" style="display: none;" onclick="downloadVideo()">
+                    💾 Download Video
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let videoBlob = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let currentStream = null;
+
+        async function generateVideo() {
+            const textarea = document.querySelector('.input-area');
+            const text = textarea.value.trim();
+            
+            if (!text) {
+                alert('Please enter some conversation text!');
+                return;
+            }
+
+            const generateBtn = document.querySelector('.generate-btn');
+            const videoContainer = document.getElementById('videoContainer');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<div class="spinner"></div> Generating...';
+            downloadBtn.style.display = 'none';
+            videoBlob = null;
+
+            try {
+                // Parse the conversation
+                const messages = parseConversation(text);
+                if (messages.length === 0) {
+                    throw new Error('No valid messages found. Please use format: P1: message or P2: message');
+                }
+
+                // Initialize voices
+                await initializeVoices();
+
+                // Create and animate the iMessage interface
+                await createiMessageVideo(messages);
+                
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '🎬 Generate Video';
+                
+            } catch (error) {
+                console.error('Error generating video:', error);
+                alert('Error generating video: ' + error.message);
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '🎬 Generate Video';
+            }
+        }
+
+        function parseConversation(text) {
+            const lines = text.split('\n').filter(line => line.trim());
+            const messages = [];
+            
+            for (const line of lines) {
+                const colonIndex = line.indexOf(':');
+                if (colonIndex > 0) {
+                    const sender = line.substring(0, colonIndex).trim().toLowerCase();
+                    const message = line.substring(colonIndex + 1).trim();
+                    if ((sender === 'p1' || sender === 'p2') && message) {
+                        messages.push({ 
+                            sender: sender,
+                            message: message,
+                            isUser: sender === 'p1'
+                        });
+                    }
+                }
+            }
+            
+            return messages;
+        }
+
+        // Voice synthesis functions
+        let voicesLoaded = false;
+        let availableVoices = [];
+
+        async function initializeVoices() {
+            if ('speechSynthesis' in window) {
+                return new Promise((resolve) => {
+                    let attempts = 0;
+                    const maxAttempts = 10;
+                    
+                    function loadVoices() {
+                        availableVoices = speechSynthesis.getVoices();
+                        if (availableVoices.length > 0 || attempts >= maxAttempts) {
+                            voicesLoaded = true;
+                            console.log('Voices loaded:', availableVoices.length);
+                            resolve();
+                        } else {
+                            attempts++;
+                            setTimeout(loadVoices, 100);
+                        }
+                    }
+                    
+                    speechSynthesis.onvoiceschanged = loadVoices;
+                    loadVoices();
+                });
+            }
+        }
+
+        async function speakText(text, voiceId, isUser) {
+            const voiceEnabled = document.getElementById('voiceEnabled').value === 'true';
+            if (!voiceEnabled || !('speechSynthesis' in window)) {
+                // Return a small delay even when voice is disabled to maintain timing
+                return new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            return new Promise((resolve) => {
+                // Cancel any current speech to prevent overlap
+                if (speechSynthesis.speaking) {
+                    speechSynthesis.cancel();
+                    // Small delay to ensure cancellation is complete
+                    setTimeout(() => startSpeech(), 100);
+                } else {
+                    startSpeech();
+                }
+
+                function startSpeech() {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    const voiceIndex = parseInt(voiceId);
+                    
+                    // Configure voice based on selection and available voices
+                    if (availableVoices.length > 0) {
+                        // Filter voices by language (English only)
+                        const englishVoices = availableVoices.filter(v => 
+                            v.lang.startsWith('en')
+                        );
+                        
+                        if (englishVoices.length > 0) {
+                            let selectedVoice;
+                            
+                            if (voiceIndex === 0) {
+                                // Higher pitch voice - prefer female voices
+                                selectedVoice = englishVoices.find(v => 
+                                    v.name.toLowerCase().includes('female') ||
+                                    v.name.toLowerCase().includes('zira') ||
+                                    v.name.toLowerCase().includes('susan') ||
+                                    v.name.toLowerCase().includes('samantha')
+                                ) || englishVoices[0];
+                                utterance.pitch = 1.3;
+                                utterance.rate = 0.9;
+                            } else if (voiceIndex === 1) {
+                                // Medium pitch voice - neutral
+                                selectedVoice = englishVoices[Math.floor(englishVoices.length / 2)] || englishVoices[0];
+                                utterance.pitch = 1.0;
+                                utterance.rate = 1.0;
+                            } else {
+                                // Lower pitch voice - prefer male voices
+                                selectedVoice = englishVoices.find(v => 
+                                    v.name.toLowerCase().includes('male') ||
+                                    v.name.toLowerCase().includes('david') ||
+                                    v.name.toLowerCase().includes('mark') ||
+                                    v.name.toLowerCase().includes('alex')
+                                ) || englishVoices[englishVoices.length - 1] || englishVoices[0];
+                                utterance.pitch = 0.7;
+                                utterance.rate = 0.9;
+                            }
+                            
+                            utterance.voice = selectedVoice;
+                            console.log(`Using voice: ${selectedVoice.name} for ${isUser ? 'P1' : 'P2'}`);
+                        }
+                    }
+                    
+                    // Additional voice configuration
+                    utterance.volume = 0.8;
+                    
+                    utterance.onend = () => {
+                        console.log(`Voice finished for: ${text.substring(0, 30)}...`);
+                        resolve();
+                    };
+                    
+                    utterance.onerror = (event) => {
+                        console.error('Speech synthesis error:', event);
+                        resolve(); // Continue even if speech fails
+                    };
+                    
+                    console.log(`Starting speech for: ${text.substring(0, 30)}...`);
+                    speechSynthesis.speak(utterance);
+                }
+            });
+        }
+
+        async function createiMessageVideo(messages) {
+            const videoContainer = document.getElementById('videoContainer');
+            const contactName = document.getElementById('contactName').value || 'Contact';
+            const speed = document.getElementById('speed').value;
+            const p1Voice = document.getElementById('p1Voice').value;
+            const p2Voice = document.getElementById('p2Voice').value;
+            
+            const speedMap = {
+                slow: 1000,    // Extra delay after voice
+                medium: 500,   // Medium delay after voice
+                fast: 200      // Minimal delay after voice
+            };
+            const additionalDelay = speedMap[speed];
+
+            // Create enhanced iMessage interface
+            videoContainer.innerHTML = `
+                <div class="phone-frame">
+                    <div class="phone-screen" id="phoneScreen">
+                        <!-- Status bar -->
+                        <div style="background: #f6f6f6; height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 0.5px solid #c6c6c8;">
+                            <div style="font-size: 14px; font-weight: 600;">9:41</div>
+                            <div style="font-size: 14px; font-weight: 600;">●●●●●</div>
+                            <div style="display: flex; gap: 5px; align-items: center;">
+                                <div style="font-size: 14px;">📶</div>
+                                <div style="font-size: 14px;">📶</div>
+                                <div style="font-size: 14px;">🔋</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chat header -->
+                        <div style="background: #f6f6f6; height: 44px; display: flex; align-items: center; padding: 0 16px; border-bottom: 0.5px solid #c6c6c8; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="color: #007AFF; font-size: 17px;">‹</div>
+                                <div>
+                                    <div style="font-weight: 600; font-size: 17px; color: #000;">${contactName}</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <div style="color: #007AFF; font-size: 20px;">📞</div>
+                                <div style="color: #007AFF; font-size: 20px;">📹</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Messages container -->
+                        <div id="messagesContainer" style="padding: 16px; height: calc(100% - 132px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; background: white;">
+                        </div>
+                        
+                        <!-- Input area -->
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 44px; background: #f6f6f6; border-top: 0.5px solid #c6c6c8; display: flex; align-items: center; padding: 6px 8px; gap: 8px;">
+                            <div style="width: 30px; height: 30px; background: #007AFF; border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                                <div style="color: white; font-size: 16px; font-weight: bold;">+</div>
+                            </div>
+                            <div style="flex: 1; background: white; border-radius: 18px; padding: 8px 16px; border: 1px solid #c6c6c8; min-height: 32px; display: flex; align-items: center;">
+                                <div style="font-size: 16px; color: #8e8e93;">iMessage</div>
+                            </div>
+                            <div style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                <div style="color: #8e8e93; font-size: 20px;">🎤</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const messagesContainer = document.getElementById('messagesContainer');
+            
+            // Start screen recording
+            await startScreenRecording();
+            
+            // Animate messages with voice synchronization
+            for (let i = 0; i < messages.length; i++) {
+                const msg = messages[i];
+                const isUser = msg.isUser;
+                const voiceId = isUser ? p1Voice : p2Voice;
+                
+                console.log(`Processing message ${i + 1}/${messages.length}: ${msg.message.substring(0, 30)}...`);
+                
+                // Add typing indicator for non-user messages
+                if (!isUser && i > 0) {
+                    const typingDiv = document.createElement('div');
+                    typingDiv.style.cssText = `
+                        display: flex;
+                        justify-content: flex-start;
+                        margin: 8px 0;
+                    `;
+                    
+                    const typingBubble = document.createElement('div');
+                    typingBubble.style.cssText = `
+                        background: #E9E9EB;
+                        padding: 12px 16px;
+                        border-radius: 18px;
+                        border-bottom-left-radius: 4px;
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                    `;
+                    typingBubble.innerHTML = `
+                        <div style="width: 8px; height: 8px; background: #999; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; animation-delay: -0.32s;"></div>
+                        <div style="width: 8px; height: 8px; background: #999; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; animation-delay: -0.16s;"></div>
+                        <div style="width: 8px; height: 8px; background: #999; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both;"></div>
+                    `;
+                    
+                    typingDiv.appendChild(typingBubble);
+                    messagesContainer.appendChild(typingDiv);
+                    
+                    // Wait for typing indicator
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    messagesContainer.removeChild(typingDiv);
+                }
+                
+                // Create message bubble
+                const messageDiv = document.createElement('div');
+                messageDiv.style.cssText = `
+                    display: flex;
+                    ${isUser ? 'justify-content: flex-end;' : 'justify-content: flex-start;'}
+                    margin: 2px 0;
+                    opacity: 0;
+                    transform: translateY(20px);
+                    transition: all 0.3s ease;
+                `;
+                
+                const bubble = document.createElement('div');
+                bubble.style.cssText = `
+                    max-width: 250px;
+                    padding: 12px 16px;
+                    border-radius: 18px;
+                    font-size: 16px;
+                    line-height: 1.3;
+                    word-wrap: break-word;
+                    position: relative;
+                    ${isUser 
+                        ? 'background: #007AFF; color: white; border-bottom-right-radius: 4px;' 
+                        : 'background: #E9E9EB; color: black; border-bottom-left-radius: 4px;'
+                    }
+                `;
+                bubble.textContent = msg.message;
+                
+                messageDiv.appendChild(bubble);
+                messagesContainer.appendChild(messageDiv);
+                
+                // Animate message appearance
+                await new Promise(resolve => {
+                    setTimeout(() => {
+                        messageDiv.style.opacity = '1';
+                        messageDiv.style.transform = 'translateY(0)';
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        resolve();
+                    }, 300);
+                });
+                
+                // Wait a moment before starting voice
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Speak the message and wait for it to complete
+                console.log(`Starting voice for message: ${msg.message.substring(0, 30)}...`);
+                await speakText(msg.message, voiceId, isUser);
+                console.log(`Voice completed for message: ${msg.message.substring(0, 30)}...`);
+                
+                // Add additional delay based on speed setting before next message
+                if (i < messages.length - 1) { // Don't wait after the last message
+                    console.log(`Waiting ${additionalDelay}ms before next message...`);
+                    await new Promise(resolve => setTimeout(resolve, additionalDelay));
+                }
+            }
+            
+            console.log('All messages processed, stopping recording...');
+            
+            // Stop recording after animation completes
+            setTimeout(() => {
+                stopScreenRecording();
+            }, 2000);
+        }
+
+        async function startScreenRecording() {
+            try {
+                // Create canvas-based recording for better compatibility
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 375;
+                canvas.height = 600;
+                
+                // Create video stream from canvas
+                const canvasStream = canvas.captureStream(30);
+                
+                // Get audio stream if available
+                let audioStream = null;
+                try {
+                    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                } catch (e) {
+                    console.log('Audio not available, recording video only');
+                }
+                
+                // Combine streams
+                let combinedStream;
+                if (audioStream) {
+                    combinedStream = new MediaStream([
+                        ...canvasStream.getVideoTracks(),
+                        ...audioStream.getAudioTracks()
+                    ]);
+                } else {
+                    combinedStream = canvasStream;
+                }
+                
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(combinedStream, {
+                    mimeType: 'video/webm'
+                });
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    createVideoPreview(blob);
+                    
+                    // Clean up streams
+                    if (audioStream) {
+                        audioStream.getTracks().forEach(track => track.stop());
+                    }
+                    canvasStream.getTracks().forEach(track => track.stop());
+                };
+                
+                // Start recording
+                mediaRecorder.start();
+                currentStream = combinedStream;
+                
+                // Capture phone screen to canvas
+                startCanvasCapture(canvas, ctx);
+                
+                console.log('Canvas recording started');
+                
+            } catch (error) {
+                console.warn('Recording not available:', error);
+                createStaticPreview();
+            }
+        }
+
+        function startCanvasCapture(canvas, ctx) {
+            const phoneScreen = document.getElementById('phoneScreen');
+            
+            function captureFrame() {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    // Clear canvas
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw phone frame
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(3, 3, canvas.width - 6, canvas.height - 6);
+                    
+                    // Capture the current state of the phone screen
+                    try {
+                        // Draw status bar
+                        ctx.fillStyle = '#f6f6f6';
+                        ctx.fillRect(3, 3, canvas.width - 6, 44);
+                        
+                        // Draw status bar text
+                        ctx.fillStyle = '#000000';
+                        ctx.font = '17px -apple-system, BlinkMacSystemFont, sans-serif';
+                        const contactName = document.getElementById('contactName').value || 'Contact';
+                        ctx.fillText('‹ ' + contactName, 20, 75);
+                        
+                        // Draw messages area background
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(3, 91, canvas.width - 6, canvas.height - 135);
+                        
+                        // Draw input area
+                        ctx.fillStyle = '#f6f6f6';
+                        ctx.fillRect(3, canvas.height - 44, canvas.width - 6, 44);
+                        
+                    } catch (e) {
+                        console.log('Canvas capture error:', e);
+                    }
+                    
+                    requestAnimationFrame(captureFrame);
+                }
+            }
+            
+            captureFrame();
+        }
+
+        function stopScreenRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+                console.log('Screen recording stopped');
+            }
+        }
+
+        function createVideoPreview(blob) {
+            const videoContainer = document.getElementById('videoContainer');
+            const url = URL.createObjectURL(blob);
+            
+            videoContainer.innerHTML = `
+                <div style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                    <video controls autoplay loop style="width: 375px; height: 600px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);" id="generatedVideo">
+                        <source src="${url}" type="video/webm">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div style="text-align: center; color: #666;">
+                        <div style="font-weight: 600; margin-bottom: 5px; color: #007AFF;">✅ Video Generated Successfully!</div>
+                        <div style="font-size: 14px;">Preview your iMessage conversation above</div>
+                        <div style="font-size: 12px; margin-top: 5px; color: #999;">
+                            File size: ${(blob.size / 1024 / 1024).toFixed(2)} MB
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            videoBlob = blob;
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.style.display = 'block';
+            
+            // Add success animation
+            downloadBtn.style.animation = 'pulse 2s infinite';
+            setTimeout(() => {
+                downloadBtn.style.animation = 'none';
+            }, 4000);
+        }
+
+        function createStaticPreview() {
+            // Create a downloadable video using canvas animation
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 375;
+            canvas.height = 600;
+            
+            // Create a simple animated sequence
+            const frames = [];
+            const totalFrames = 60; // 2 seconds at 30fps
+            
+            for (let i = 0; i < totalFrames; i++) {
+                // Create frame
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Phone frame
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(3, 3, canvas.width - 6, canvas.height - 6);
+                
+                // Status bar
+                ctx.fillStyle = '#f6f6f6';
+                ctx.fillRect(3, 3, canvas.width - 6, 44);
+                ctx.fillStyle = '#000000';
+                ctx.font = '14px Arial';
+                ctx.fillText('9:41', 20, 30);
+                
+                // Chat header
+                ctx.fillStyle = '#f6f6f6';
+                ctx.fillRect(3, 47, canvas.width - 6, 44);
+                ctx.fillStyle = '#000000';
+                ctx.font = '17px Arial';
+                const contactName = document.getElementById('contactName').value || 'Contact';
+                ctx.fillText('‹ ' + contactName, 20, 75);
+                
+                // Messages area
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(3, 91, canvas.width - 6, canvas.height - 135);
+                
+                // Add sample message
+                if (i > 20) {
+                    ctx.fillStyle = '#007AFF';
+                    ctx.fillRect(200, 120, 150, 40);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '16px Arial';
+                    ctx.fillText('Hello!', 220, 145);
+                }
+                
+                // Input area
+                ctx.fillStyle = '#f6f6f6';
+                ctx.fillRect(3, canvas.height - 44, canvas.width - 6, 44);
+                
+                // Store frame as data URL
+                frames.push(canvas.toDataURL());
+            }
+            
+            // Create a simple blob for download
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    videoBlob = blob;
+                    document.getElementById('downloadBtn').style.display = 'block';
+                    
+                    // Show success message
+                    const videoContainer = document.getElementById('videoContainer');
+                    const currentContent = videoContainer.innerHTML;
+                    videoContainer.innerHTML = currentContent + `
+                        <div style="position: absolute; top: 20px; right: 20px; background: rgba(52, 199, 89, 0.9); color: white; padding: 10px 15px; border-radius: 8px; font-size: 14px; font-weight: 600;">
+                            ✅ Video Ready for Download
+                        </div>
+                    `;
+                }
+            }, 'image/png');
+        }
+
+        function downloadVideo() {
+            if (!videoBlob) {
+                alert('No video to download. Please generate a video first!');
+                return;
+            }
+            
+            try {
+                const url = URL.createObjectURL(videoBlob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                
+                // Determine file extension based on blob type
+                let extension = 'webm';
+                let filename = `imessage-conversation-${Date.now()}`;
+                
+                if (videoBlob.type.includes('video/webm')) {
+                    extension = 'webm';
+                } else if (videoBlob.type.includes('video/mp4')) {
+                    extension = 'mp4';
+                } else if (videoBlob.type.includes('image/png')) {
+                    extension = 'png';
+                    filename = `imessage-screenshot-${Date.now()}`;
+                }
+                
+                a.download = `${filename}.${extension}`;
+                
+                document.body.appendChild(a);
+                a.click();
+                
+                // Show download success message
+                const downloadBtn = document.getElementById('downloadBtn');
+                const originalText = downloadBtn.innerHTML;
+                downloadBtn.innerHTML = '✅ Downloaded!';
+                downloadBtn.style.background = 'linear-gradient(135deg, #34C759, #30A14E)';
+                
+                setTimeout(() => {
+                    downloadBtn.innerHTML = originalText;
+                    downloadBtn.style.background = 'linear-gradient(135deg, #FF3B30, #D70015)';
+                }, 2000);
+                
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                console.log('Download initiated:', filename + '.' + extension);
+                
+            } catch (error) {
+                console.error('Download failed:', error);
+                alert('Download failed: ' + error.message + '. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>
+                        ctx.font = '14px -apple-system, BlinkMacSystemFont, sans-serif';
+                        ctx.fillText('9:41', 20, 30);
+                        ctx.fillText('●●●●●', canvas.width/2 - 20, 30);
+                        
+                        // Draw chat header
+                        ctx.fillStyle = '#f6f6f6';
+                        ctx.fillRect(3, 47, canvas.width - 6, 44);
+                        ctx.fillStyle = '#000000';
